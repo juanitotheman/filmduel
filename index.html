@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FilmDuel — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090A;
+    --bg2: #111110;
+    --bg3: #1A1A18;
+    --gold: #C9A84C;
+    --gold-l: #E2C47A;
+    --gold-d: #7A6018;
+    --gold-glow: rgba(201,168,76,0.12);
+    --white: #F2EDE4;
+    --gray: #7A7568;
+    --gray-l: #A89F92;
+    --border: rgba(201,168,76,0.15);
+    --border-strong: rgba(201,168,76,0.35);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .device {
+    width: 390px;
+    height: 844px;
+    background: var(--bg);
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 80px rgba(201,168,76,0.08), 0 40px 80px rgba(0,0,0,0.8);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* SCREENS */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .screen.active { display: flex; }
+
+  /* STATUS BAR */
+  .status-bar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    flex-shrink: 0;
+    color: var(--white);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .status-bar .time { font-weight: 600; font-size: 15px; }
+  .status-bar .icons { display: flex; gap: 6px; align-items: center; }
+
+  /* NAV BAR */
+  .nav-bar {
+    height: 82px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 12px;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 12px;
+    transition: all 0.2s;
+  }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item span { font-size: 10px; color: var(--gray); font-weight: 400; }
+  .nav-item.active span { color: var(--gold); }
+  .nav-item.active svg path, .nav-item.active svg rect, .nav-item.active svg circle { fill: var(--gold); }
+  .nav-item svg path, .nav-item svg rect, .nav-item svg circle { fill: var(--gray); transition: fill 0.2s; }
+
+  /* ADD BUTTON special */
+  .nav-add {
+    width: 52px; height: 52px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-top: -6px;
+    box-shadow: 0 0 20px rgba(201,168,76,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+  }
+  .nav-add:active { transform: scale(0.92); }
+  .nav-add svg path { fill: #000 !important; }
+
+  .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* TYPOGRAPHY */
+  .display { font-family: 'Playfair Display', serif; }
+  h1 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--white); font-weight: 700; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--white); font-weight: 700; }
+  h3 { font-size: 15px; color: var(--white); font-weight: 500; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .gold-tag {
+    background: var(--gold-glow);
+    border: 1px solid var(--border-strong);
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* FILM POSTER PLACEHOLDER */
+  .poster {
+    border-radius: 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .poster-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  .poster-placeholder {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold-d);
+    font-size: 11px;
+    text-align: center;
+    padding: 8px;
+  }
+
+  /* SCORE BADGE */
+  .score-badge {
+    background: var(--gold-glow);
+    border: 1px solid var(--border-strong);
+    color: var(--gold-l);
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* BTN */
+  .btn {
+    height: 52px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-gold { background: var(--gold); color: #000; }
+  .btn-gold:active { transform: scale(0.97); background: var(--gold-l); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--gold);
+  }
+  .btn-ghost { background: var(--bg3); color: var(--white); }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* ── SCREEN: ONBOARDING ─────────────────────────────── */
+  #screen-onboarding {
+    justify-content: space-between;
+    padding: 0;
+  }
+  .ob-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 32px;
+    gap: 12px;
+    position: relative;
+  }
+  .ob-glow {
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .ob-logo {
+    width: 72px; height: 72px;
+    background: var(--bg3);
+    border: 1px solid var(--border-strong);
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    box-shadow: 0 0 30px rgba(201,168,76,0.15);
+  }
+  .ob-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--gold-l);
+    letter-spacing: -0.5px;
+  }
+  .ob-sub {
+    font-size: 15px;
+    color: var(--gray-l);
+    text-align: center;
+    line-height: 1.5;
+    max-width: 260px;
+  }
+  .ob-features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .ob-feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .ob-feature-icon {
+    width: 32px; height: 32px;
+    background: var(--gold-glow);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+  }
+  .ob-feature-text { font-size: 13px; color: var(--gray-l); line-height: 1.3; }
+  .ob-feature-text strong { color: var(--white); display: block; font-size: 13px; margin-bottom: 1px; }
+  .ob-bottom {
+    padding: 20px 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ob-legal {
+    font-size: 11px;
+    color: var(--gray);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ── SCREEN: FEED ──────────────────────────────────── */
+  .feed-header {
+    padding: 12px 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .avatar-row {
+    display: flex;
+    gap: 16px;
+    padding: 0 20px 16px;
+    overflow-x: auto;
+  }
+  .avatar-row::-webkit-scrollbar { display: none; }
+  .avatar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .avatar {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    position: relative;
+  }
+  .avatar.active-story { border-color: var(--gold); }
+  .avatar span { font-size: 9px; color: var(--gray-l); text-align: center; max-width: 50px; }
+  .feed-card {
+    margin: 0 16px 12px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .feed-card-header {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feed-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .feed-card-poster {
+    width: 100%;
+    height: 200px;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .feed-poster-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 40px 14px 14px;
+    background: linear-gradient(transparent, rgba(9,9,10,0.95));
+  }
+  .feed-card-actions {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .feed-action {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--gray-l);
+    cursor: pointer;
+  }
+
+  /* ── SCREEN: RANKINGS ─────────────────────────────── */
+  .rankings-header {
+    padding: 12px 20px 8px;
+  }
+  .rank-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 0 20px 16px;
+  }
+  .rank-tab {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+    color: var(--gray-l);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .rank-tab.active {
+    background: var(--gold-glow);
+    border-color: var(--border-strong);
+    color: var(--gold);
+  }
+  .rank-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .rank-item:active { background: var(--bg2); }
+  .rank-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--gold-d);
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .rank-num.top { color: var(--gold); }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-title { font-size: 14px; color: var(--white); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-meta { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+  /* ── SCREEN: ADD / DUEL ───────────────────────────── */
+  .add-header {
+    padding: 12px 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .search-box {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gray);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: text;
+  }
+  .search-results {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .search-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .search-result:active { border-color: var(--gold); }
+  .result-poster {
+    width: 42px; height: 60px;
+    border-radius: 7px;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .result-info { flex: 1; }
+  .result-title { font-size: 14px; color: var(--white); font-weight: 500; }
+  .result-meta { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .result-add {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--gold-glow);
+    border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* DUEL OVERLAY */
+  #duel-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    display: none;
+    flex-direction: column;
+    z-index: 100;
+  }
+  #duel-overlay.active { display: flex; }
+  .duel-header {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .duel-vs-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    gap: 16px;
+  }
+  .duel-instruction {
+    font-size: 13px;
+    color: var(--gray-l);
+    text-align: center;
+  }
+  .duel-films {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    align-items: stretch;
+  }
+  .duel-film {
+    flex: 1;
+    background: var(--bg2);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .duel-film:active, .duel-film.selected {
+    border-color: var(--gold);
+    background: var(--bg3);
+    box-shadow: 0 0 20px rgba(201,168,76,0.15);
+  }
+  .duel-film.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 22px; height: 22px;
+    background: var(--gold);
+    border-radius: 50%;
+    color: #000;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .duel-film-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: 10px;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+  .duel-film-title {
+    font-size: 13px;
+    color: var(--white);
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .duel-film-year {
+    font-size: 11px;
+    color: var(--gray);
+  }
+  .duel-film-score {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    color: var(--gold);
+  }
+  .duel-vs-badge {
+    width: 36px; height: 36px;
+    background: var(--bg3);
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 700;
+    flex-shrink: 0;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 50%;
+  }
+  .duel-progress {
+    display: flex;
+    gap: 6px;
+    padding: 0 20px;
+  }
+  .duel-dot {
+    flex: 1; height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+  .duel-dot.done { background: var(--gold); }
+  .duel-dot.current { background: var(--gold-d); }
+  .duel-skip {
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--gray);
+    text-align: center;
+    cursor: pointer;
+  }
+
+  /* ── SCREEN: RECS ──────────────────────────────────── */
+  .recs-header {
+    padding: 12px 20px 8px;
+  }
+  .rec-section-title {
+    padding: 8px 20px 10px;
+    font-size: 12px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .rec-card {
+    display: flex;
+    gap: 12px;
+    padding: 10px 20px;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .rec-card:active { background: var(--bg2); }
+  .rec-poster {
+    width: 52px; height: 74px;
+    border-radius: 8px;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .rec-info { flex: 1; }
+  .rec-title { font-size: 14px; color: var(--white); font-weight: 500; }
+  .rec-reason { font-size: 11px; color: var(--gray-l); margin-top: 3px; line-height: 1.4; }
+  .rec-match {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .rec-match-pct {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .rec-match-label { font-size: 9px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; }
+  .rec-horizontal {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .rec-horizontal::-webkit-scrollbar { display: none; }
+  .rec-h-card {
+    flex-shrink: 0;
+    width: 110px;
+    cursor: pointer;
+  }
+  .rec-h-poster {
+    width: 110px; height: 155px;
+    border-radius: 10px;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .rec-h-title { font-size: 12px; color: var(--white); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec-h-score { font-size: 11px; color: var(--gold); }
+
+  /* ── SCREEN: PROFILE ───────────────────────────────── */
+  .profile-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .profile-hero {
+    padding: 0 20px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .profile-avatar-big {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+  .profile-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--white);
+  }
+  .profile-handle { font-size: 13px; color: var(--gray); }
+  .profile-stats {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .profile-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .profile-stat:first-child { border-radius: 12px 0 0 12px; }
+  .profile-stat:last-child { border-radius: 0 12px 12px 0; border-left: none; }
+  .profile-stat:not(:first-child):not(:last-child) { border-left: none; }
+  .profile-stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--gold-l);
+    font-weight: 700;
+  }
+  .profile-stat-label { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; }
+  .profile-section {
+    padding: 0 20px;
+    margin-bottom: 16px;
+  }
+  .profile-section-title {
+    font-size: 12px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .taste-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .taste-tag {
+    padding: 6px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--gray-l);
+  }
+  .taste-tag.strong {
+    background: var(--gold-glow);
+    border-color: var(--border-strong);
+    color: var(--gold);
+  }
+  .top-films-row {
+    display: flex;
+    gap: 8px;
+  }
+  .top-film-mini {
+    flex: 1;
+    aspect-ratio: 2/3;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .top-film-rank {
+    position: absolute;
+    bottom: 4px; left: 4px;
+    background: rgba(0,0,0,0.8);
+    color: var(--gold);
+    font-size: 9px;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 5px;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .screen.active { animation: fadeIn 0.25s ease; }
+  @keyframes duelPop { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  #duel-overlay.active { animation: duelPop 0.3s ease; }
+  @keyframes scoreReveal {
+    0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+    60% { transform: scale(1.1) rotate(2deg); }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="device">
+
+  <!-- ── ONBOARDING ─────────────────────────────────────── -->
+  <div class="screen active" id="screen-onboarding">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity="0.4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity="0.6"/><rect x="9" y="0.5" width="3" height="11.5" rx="1" fill="white" opacity="0.8"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" fill="white"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2C10.5 2 12.8 3.1 14.3 4.9L15.5 3.5C13.6 1.3 10.9 0 8 0C5.1 0 2.4 1.3 0.5 3.5L1.7 4.9C3.2 3.1 5.5 2 8 2Z" fill="white" opacity="0.5"/><path d="M8 5C9.7 5 11.2 5.7 12.3 6.9L13.5 5.5C12 3.9 10.1 3 8 3C5.9 3 4 3.9 2.5 5.5L3.7 6.9C4.8 5.7 6.3 5 8 5Z" fill="white" opacity="0.75"/><circle cx="8" cy="10" r="2" fill="white"/></svg>
+        <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-opacity="0.4" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="17" height="7" rx="1.5" fill="white"/><path d="M23 4.5V7.5C23.8 7.2 24.5 6.5 24.5 6C24.5 5.5 23.8 4.8 23 4.5Z" fill="white" opacity="0.4"/></svg>
+      </div>
+    </div>
+    <div class="ob-hero">
+      <div class="ob-glow"></div>
+      <div class="ob-logo">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <rect x="4" y="4" width="12" height="28" rx="2" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+          <rect x="20" y="4" width="12" height="28" rx="2" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+          <circle cx="10" cy="18" r="3.5" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+          <circle cx="26" cy="18" r="3.5" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+          <circle cx="10" cy="10" r="1.2" fill="#C9A84C" opacity="0.5"/>
+          <circle cx="10" cy="26" r="1.2" fill="#C9A84C" opacity="0.5"/>
+          <circle cx="26" cy="10" r="1.2" fill="#C9A84C" opacity="0.5"/>
+          <circle cx="26" cy="26" r="1.2" fill="#C9A84C" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="ob-title">FilmDuel</div>
+      <div class="ob-sub">Your movies, ranked the way you actually feel.</div>
+      <div class="ob-features">
+        <div class="ob-feature">
+          <div class="ob-feature-icon">⚔️</div>
+          <div class="ob-feature-text"><strong>1v1 Duels</strong>Pick the winner, your ranking builds itself</div>
+        </div>
+        <div class="ob-feature">
+          <div class="ob-feature-icon">🧠</div>
+          <div class="ob-feature-text"><strong>AI Recommendations</strong>Films predicted just for your taste</div>
+        </div>
+        <div class="ob-feature">
+          <div class="ob-feature-icon">👥</div>
+          <div class="ob-feature-text"><strong>Social</strong>See what your friends are ranking</div>
+        </div>
+      </div>
+    </div>
+    <div class="ob-bottom">
+      <button class="btn btn-gold" onclick="goTo('feed')" style="width:100%">Continue with Google</button>
+      <button class="btn btn-outline" onclick="goTo('feed')" style="width:100%">Continue with Apple</button>
+      <div class="ob-legal">By continuing you agree to our Terms of Service<br>and Privacy Policy</div>
+    </div>
+  </div>
+
+  <!-- ── FEED ──────────────────────────────────────────── -->
+  <div class="screen" id="screen-feed">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity="0.4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity="0.6"/><rect x="9" y="0.5" width="3" height="11.5" rx="1" fill="white" opacity="0.8"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" fill="white"/></svg>
+        <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-opacity="0.4" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="17" height="7" rx="1.5" fill="white"/></svg>
+      </div>
+    </div>
+    <div class="feed-header">
+      <h1 style="font-size:24px">Feed</h1>
+      <div style="width:34px;height:34px;background:var(--bg2);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px">🔔</div>
+    </div>
+    <div class="avatar-row">
+      <div class="avatar-item"><div class="avatar active-story">🎬</div><span style="font-size:9px;color:var(--gray-l)">You</span></div>
+      <div class="avatar-item"><div class="avatar active-story">👤</div><span style="font-size:9px;color:var(--gray-l)">Ana</span></div>
+      <div class="avatar-item"><div class="avatar active-story">👤</div><span style="font-size:9px;color:var(--gray-l)">Maitane</span></div>
+      <div class="avatar-item"><div class="avatar">👤</div><span style="font-size:9px;color:var(--gray-l)">Carlos</span></div>
+      <div class="avatar-item"><div class="avatar">👤</div><span style="font-size:9px;color:var(--gray-l)">Diego</span></div>
+    </div>
+    <div class="scroll-area">
+      <!-- Feed card 1 -->
+      <div class="feed-card">
+        <div class="feed-card-header">
+          <div class="feed-avatar">👤</div>
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--white);font-weight:500">Ana</div>
+            <div style="font-size:11px;color:var(--gray)">ranked a film · 2h ago</div>
+          </div>
+          <div class="score-badge">9.1</div>
+        </div>
+        <div class="feed-card-poster">
+          <div style="font-size:64px">🎬</div>
+          <div class="feed-poster-overlay">
+            <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--white);font-weight:700">The Godfather</div>
+            <div style="font-size:12px;color:var(--gray-l);margin-top:2px">1972 · Francis Ford Coppola</div>
+          </div>
+        </div>
+        <div class="feed-card-actions">
+          <div class="feed-action">❤️ <span>12</span></div>
+          <div class="feed-action">💬 <span>3</span></div>
+          <div style="margin-left:auto"><div class="gold-tag">+ Watchlist</div></div>
+        </div>
+      </div>
+      <!-- Feed card 2 -->
+      <div class="feed-card">
+        <div class="feed-card-header">
+          <div class="feed-avatar">👤</div>
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--white);font-weight:500">Maitane</div>
+            <div style="font-size:11px;color:var(--gray)">ranked a film · 5h ago</div>
+          </div>
+          <div class="score-badge">7.4</div>
+        </div>
+        <div class="feed-card-poster">
+          <div style="font-size:64px">🎥</div>
+          <div class="feed-poster-overlay">
+            <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--white);font-weight:700">Parasite</div>
+            <div style="font-size:12px;color:var(--gray-l);margin-top:2px">2019 · Bong Joon-ho</div>
+          </div>
+        </div>
+        <div class="feed-card-actions">
+          <div class="feed-action">❤️ <span>8</span></div>
+          <div class="feed-action">💬 <span>1</span></div>
+          <div style="margin-left:auto"><div class="gold-tag">+ Watchlist</div></div>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item active" onclick="goTo('feed')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        <span>Feed</span>
+      </div>
+      <div class="nav-item" onclick="goTo('rankings')">
+        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        <span>Rankings</span>
+      </div>
+      <div class="nav-add" onclick="goTo('add')">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#000" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+      </div>
+      <div class="nav-item" onclick="goTo('recs')">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span>Recs</span>
+      </div>
+      <div class="nav-item" onclick="goTo('profile')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RANKINGS ───────────────────────────────────────── -->
+  <div class="screen" id="screen-rankings">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="icons"><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-opacity="0.4" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="17" height="7" rx="1.5" fill="white"/></svg></div>
+    </div>
+    <div class="rankings-header">
+      <h1 style="font-size:24px">My Rankings</h1>
+    </div>
+    <div class="rank-tabs">
+      <button class="rank-tab active">All time</button>
+      <button class="rank-tab" onclick="this.parentElement.querySelectorAll('.rank-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">This year</button>
+      <button class="rank-tab" onclick="this.parentElement.querySelectorAll('.rank-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">Drama</button>
+    </div>
+    <div class="scroll-area">
+      <div style="padding:0 20px 8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--gray)">47 films ranked</span>
+        <span style="font-size:12px;color:var(--gold);cursor:pointer">Sort ↕</span>
+      </div>
+      <!-- Top 3 special -->
+      <div style="padding:0 16px 8px;display:flex;gap:8px">
+        <div style="flex:1;background:var(--bg2);border:1px solid var(--gold-d);border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer">
+          <div style="font-size:10px;color:var(--gold);font-weight:500">🥇 #1</div>
+          <div style="width:48px;height:68px;background:var(--bg3);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:20px">🎬</div>
+          <div style="font-size:11px;color:var(--white);text-align:center;font-weight:500">The Godfather</div>
+          <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold)">9.8</div>
+        </div>
+        <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer">
+          <div style="font-size:10px;color:var(--gray-l);font-weight:500">🥈 #2</div>
+          <div style="width:48px;height:68px;background:var(--bg3);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:20px">🎥</div>
+          <div style="font-size:11px;color:var(--white);text-align:center;font-weight:500">2001: A Space Odyssey</div>
+          <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold)">9.4</div>
+        </div>
+        <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer">
+          <div style="font-size:10px;color:var(--gray-l);font-weight:500">🥉 #3</div>
+          <div style="width:48px;height:68px;background:var(--bg3);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:20px">🎞</div>
+          <div style="font-size:11px;color:var(--white);text-align:center;font-weight:500">Blade Runner 2049</div>
+          <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold)">9.1</div>
+        </div>
+      </div>
+      <div class="divider" style="margin:4px 20px"></div>
+      <!-- Rest of list -->
+      <div class="rank-item"><div class="rank-num">4</div><div class="poster" style="width:36px;height:52px;font-size:16px">🎬</div><div class="rank-info"><div class="rank-title">There Will Be Blood</div><div class="rank-meta">2007 · Drama</div></div><div class="score-badge" style="width:38px;height:38px;font-size:14px">8.9</div></div>
+      <div class="rank-item"><div class="rank-num">5</div><div class="poster" style="width:36px;height:52px;font-size:16px">🎥</div><div class="rank-info"><div class="rank-title">Mulholland Drive</div><div class="rank-meta">2001 · Mystery</div></div><div class="score-badge" style="width:38px;height:38px;font-size:14px">8.7</div></div>
+      <div class="rank-item"><div class="rank-num">6</div><div class="poster" style="width:36px;height:52px;font-size:16px">🎞</div><div class="rank-info"><div class="rank-title">Inception</div><div class="rank-meta">2010 · Sci-Fi</div></div><div class="score-badge" style="width:38px;height:38px;font-size:14px">8.4</div></div>
+      <div class="rank-item"><div class="rank-num">7</div><div class="poster" style="width:36px;height:52px;font-size:16px">🎬</div><div class="rank-info"><div class="rank-title">Parasite</div><div class="rank-meta">2019 · Thriller</div></div><div class="score-badge" style="width:38px;height:38px;font-size:14px">8.2</div></div>
+      <div class="rank-item"><div class="rank-num">8</div><div class="poster" style="width:36px;height:52px;font-size:16px">🎥</div><div class="rank-info"><div class="rank-title">No Country for Old Men</div><div class="rank-meta">2007 · Crime</div></div><div class="score-badge" style="width:38px;height:38px;font-size:14px">8.0</div></div>
+      <div style="height:16px"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item" onclick="goTo('feed')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>Feed</span></div>
+      <div class="nav-item active" onclick="goTo('rankings')"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Rankings</span></div>
+      <div class="nav-add" onclick="goTo('add')"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#000" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="nav-item" onclick="goTo('recs')"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Recs</span></div>
+      <div class="nav-item" onclick="goTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- ── ADD ────────────────────────────────────────────── -->
+  <div class="screen" id="screen-add">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="icons"><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-opacity="0.4" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="17" height="7" rx="1.5" fill="white"/></svg></div>
+    </div>
+    <div class="add-header">
+      <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);font-weight:700;flex:1">Add a Film</div>
+      <div style="font-size:13px;color:var(--gold);cursor:pointer" onclick="goTo('feed')">Cancel</div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span>Search films...</span>
+      </div>
+    </div>
+    <div style="padding:0 20px 10px;font-size:12px;color:var(--gray);text-transform:uppercase;letter-spacing:1px">Trending</div>
+    <div class="scroll-area" style="padding:0 16px">
+      <div class="search-results">
+        <div class="search-result" onclick="startDuel('Dune: Part Two', '2024')">
+          <div class="result-poster">🏜️</div>
+          <div class="result-info">
+            <div class="result-title">Dune: Part Two</div>
+            <div class="result-meta">2024 · Sci-Fi · Denis Villeneuve</div>
+          </div>
+          <div class="result-add">+</div>
+        </div>
+        <div class="search-result" onclick="startDuel('Poor Things', '2023')">
+          <div class="result-poster">🎭</div>
+          <div class="result-info">
+            <div class="result-title">Poor Things</div>
+            <div class="result-meta">2023 · Fantasy · Yorgos Lanthimos</div>
+          </div>
+          <div class="result-add">+</div>
+        </div>
+        <div class="search-result" onclick="startDuel('Oppenheimer', '2023')">
+          <div class="result-poster">💥</div>
+          <div class="result-info">
+            <div class="result-title">Oppenheimer</div>
+            <div class="result-meta">2023 · Drama · Christopher Nolan</div>
+          </div>
+          <div class="result-add">+</div>
+        </div>
+        <div class="search-result" onclick="startDuel('Past Lives', '2023')">
+          <div class="result-poster">💙</div>
+          <div class="result-info">
+            <div class="result-title">Past Lives</div>
+            <div class="result-meta">2023 · Romance · Celine Song</div>
+          </div>
+          <div class="result-add">+</div>
+        </div>
+        <div class="search-result" onclick="startDuel('Killers of the Flower Moon', '2023')">
+          <div class="result-poster">🌙</div>
+          <div class="result-info">
+            <div class="result-title">Killers of the Flower Moon</div>
+            <div class="result-meta">2023 · Western · Martin Scorsese</div>
+          </div>
+          <div class="result-add">+</div>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item" onclick="goTo('feed')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>Feed</span></div>
+      <div class="nav-item" onclick="goTo('rankings')"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Rankings</span></div>
+      <div class="nav-add" onclick="goTo('add')"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#000" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="nav-item" onclick="goTo('recs')"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Recs</span></div>
+      <div class="nav-item" onclick="goTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- ── RECS ───────────────────────────────────────────── -->
+  <div class="screen" id="screen-recs">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="icons"><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-opacity="0.4" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="17" height="7" rx="1.5" fill="white"/></svg></div>
+    </div>
+    <div class="recs-header">
+      <h1 style="font-size:24px">For You</h1>
+      <div style="font-size:13px;color:var(--gray);margin-top:2px">Based on your taste profile</div>
+    </div>
+    <div class="scroll-area">
+      <div class="rec-section-title">Top picks</div>
+      <div class="rec-horizontal">
+        <div class="rec-h-card">
+          <div class="rec-h-poster">🌊</div>
+          <div class="rec-h-title">The Zone of Interest</div>
+          <div class="rec-h-score">~9.2 predicted</div>
+        </div>
+        <div class="rec-h-card">
+          <div class="rec-h-poster">🔥</div>
+          <div class="rec-h-title">All of Us Strangers</div>
+          <div class="rec-h-score">~8.9 predicted</div>
+        </div>
+        <div class="rec-h-card">
+          <div class="rec-h-poster">🎪</div>
+          <div class="rec-h-title">Aftersun</div>
+          <div class="rec-h-score">~8.7 predicted</div>
+        </div>
+        <div class="rec-h-card">
+          <div class="rec-h-poster">🌑</div>
+          <div class="rec-h-title">The Lighthouse</div>
+          <div class="rec-h-score">~8.5 predicted</div>
+        </div>
+      </div>
+      <div class="rec-section-title" style="margin-top:8px">Because you loved Blade Runner 2049</div>
+      <div class="rec-card">
+        <div class="rec-poster">🤖</div>
+        <div class="rec-info">
+          <div class="rec-title">Ex Machina</div>
+          <div class="rec-reason">Slow-burn sci-fi · Alex Garland · Visual atmosphere</div>
+        </div>
+        <div class="rec-match"><div class="rec-match-pct">94%</div><div class="rec-match-label">match</div></div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-poster">🌆</div>
+        <div class="rec-info">
+          <div class="rec-title">Annihilation</div>
+          <div class="rec-reason">Cerebral sci-fi · Alex Garland · Stunning visuals</div>
+        </div>
+        <div class="rec-match"><div class="rec-match-pct">91%</div><div class="rec-match-label">match</div></div>
+      </div>
+      <div class="rec-section-title" style="margin-top:4px">Because your friends love it</div>
+      <div class="rec-card">
+        <div class="rec-poster">🕰️</div>
+        <div class="rec-info">
+          <div class="rec-title">Tár</div>
+          <div class="rec-reason">Ana: 9.3 · Maitane: 8.8 · Drama · Cate Blanchett</div>
+        </div>
+        <div class="rec-match"><div class="rec-match-pct">88%</div><div class="rec-match-label">match</div></div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item" onclick="goTo('feed')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>Feed</span></div>
+      <div class="nav-item" onclick="goTo('rankings')"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Rankings</span></div>
+      <div class="nav-add" onclick="goTo('add')"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#000" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="nav-item active" onclick="goTo('recs')"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Recs</span></div>
+      <div class="nav-item" onclick="goTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- ── PROFILE ────────────────────────────────────────── -->
+  <div class="screen" id="screen-profile">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="icons"><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-opacity="0.4" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="17" height="7" rx="1.5" fill="white"/></svg></div>
+    </div>
+    <div class="profile-header">
+      <h1 style="font-size:22px">Profile</h1>
+      <div style="font-size:20px;cursor:pointer">⚙️</div>
+    </div>
+    <div class="scroll-area">
+      <div class="profile-hero">
+        <div class="profile-avatar-big">🎬</div>
+        <div class="profile-name">Juan Montaño</div>
+        <div class="profile-handle">@juansmontano</div>
+        <div class="profile-stats">
+          <div class="profile-stat"><div class="profile-stat-num">47</div><div class="profile-stat-label">Films</div></div>
+          <div class="profile-stat"><div class="profile-stat-num">312</div><div class="profile-stat-label">Duels</div></div>
+          <div class="profile-stat"><div class="profile-stat-num">18</div><div class="profile-stat-label">Friends</div></div>
+        </div>
+      </div>
+      <!-- Top films -->
+      <div class="profile-section">
+        <div class="profile-section-title">Top films</div>
+        <div class="top-films-row">
+          <div class="top-film-mini">🎬<div class="top-film-rank">#1 · 9.8</div></div>
+          <div class="top-film-mini">🎥<div class="top-film-rank">#2 · 9.4</div></div>
+          <div class="top-film-mini">🎞<div class="top-film-rank">#3 · 9.1</div></div>
+          <div class="top-film-mini">🎬<div class="top-film-rank">#4 · 8.9</div></div>
+        </div>
+      </div>
+      <!-- Taste profile -->
+      <div class="profile-section">
+        <div class="profile-section-title">Taste profile</div>
+        <div class="taste-tags">
+          <div class="taste-tag strong">Drama</div>
+          <div class="taste-tag strong">Sci-Fi</div>
+          <div class="taste-tag strong">Denis Villeneuve</div>
+          <div class="taste-tag">Crime</div>
+          <div class="taste-tag">Stanley Kubrick</div>
+          <div class="taste-tag">A24</div>
+          <div class="taste-tag strong">Slow cinema</div>
+          <div class="taste-tag">Neo-noir</div>
+          <div class="taste-tag">Coen Brothers</div>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="profile-section">
+        <div class="profile-section-title">Activity</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--gray-l)">Average score</span>
+            <span style="font-family:'Playfair Display',serif;font-size:16px;color:var(--gold)">7.6</span>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--gray-l)">Most watched decade</span>
+            <span style="font-size:13px;color:var(--white);font-weight:500">2000s</span>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--gray-l)">Duels this week</span>
+            <span style="font-size:13px;color:var(--white);font-weight:500">24 ⚔️</span>
+          </div>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-item" onclick="goTo('feed')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>Feed</span></div>
+      <div class="nav-item" onclick="goTo('rankings')"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Rankings</span></div>
+      <div class="nav-add" onclick="goTo('add')"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#000" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="nav-item" onclick="goTo('recs')"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Recs</span></div>
+      <div class="nav-item active" onclick="goTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- ── DUEL OVERLAY ───────────────────────────────────── -->
+  <div id="duel-overlay">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+    </div>
+    <div class="duel-header">
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--white);font-weight:700">Duel Time ⚔️</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:1px">Which do you prefer?</div>
+      </div>
+      <div style="font-size:13px;color:var(--gold);cursor:pointer" id="duel-added-title"></div>
+    </div>
+    <div class="duel-progress" id="duel-progress">
+      <div class="duel-dot done"></div>
+      <div class="duel-dot current"></div>
+      <div class="duel-dot"></div>
+      <div class="duel-dot"></div>
+      <div class="duel-dot"></div>
+    </div>
+    <div class="duel-vs-area">
+      <div style="font-size:12px;color:var(--gray-l);margin-bottom:4px">Tap to choose your winner</div>
+      <div class="duel-films" style="position:relative">
+        <div class="duel-film" id="duel-left" onclick="selectDuel('left')">
+          <div class="duel-film-poster" id="duel-left-poster">🏜️</div>
+          <div class="duel-film-title" id="duel-left-title">Dune: Part Two</div>
+          <div class="duel-film-year">2024</div>
+          <div class="duel-film-score">New film</div>
+        </div>
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:32px;height:32px;background:var(--bg);border:1px solid var(--border-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gold);font-weight:700;z-index:2">VS</div>
+        <div class="duel-film" id="duel-right" onclick="selectDuel('right')">
+          <div class="duel-film-poster" id="duel-right-poster">🎞</div>
+          <div class="duel-film-title" id="duel-right-title">Blade Runner 2049</div>
+          <div class="duel-film-year">2017</div>
+          <div class="duel-film-score">Current: 9.1</div>
+        </div>
+      </div>
+    </div>
+    <div class="duel-skip" onclick="nextDuel()">Skip this comparison →</div>
+  </div>
+
+</div><!-- /device -->
+
+<script>
+  let currentFilm = '', currentFilmYear = '', currentFilmEmoji = '';
+  let currentRating = 'liked';
+  let duelStep = 0, newFilmElo = 1500, loElo = 0, hiElo = 2000;
+
+  const rankingPool = [
+    { emoji:'🎞', title:'Blade Runner 2049',      year:'2017', elo:1820, tier:'liked'    },
+    { emoji:'🎬', title:'There Will Be Blood',    year:'2007', elo:1780, tier:'liked'    },
+    { emoji:'🎥', title:'Inception',              year:'2010', elo:1740, tier:'liked'    },
+    { emoji:'🎭', title:'Parasite',               year:'2019', elo:1700, tier:'liked'    },
+    { emoji:'🌙', title:'Mulholland Drive',        year:'2001', elo:1760, tier:'liked'    },
+    { emoji:'🎬', title:'The Godfather',           year:'1972', elo:1950, tier:'liked'    },
+    { emoji:'🎥', title:'2001: A Space Odyssey',  year:'1968', elo:1900, tier:'liked'    },
+    { emoji:'🎞', title:'No Country for Old Men', year:'2007', elo:1660, tier:'liked'    },
+    { emoji:'🎥', title:'Interstellar',           year:'2014', elo:1250, tier:'fine'     },
+    { emoji:'🎬', title:'La La Land',             year:'2016', elo:1150, tier:'fine'     },
+    { emoji:'🎞', title:'The Revenant',           year:'2015', elo:1050, tier:'fine'     },
+    { emoji:'🎭', title:'Avatar',                 year:'2009', elo: 650, tier:'disliked' },
+    { emoji:'🎬', title:'Transformers',           year:'2007', elo: 500, tier:'disliked' },
+  ];
+
+  const tierRanges = {
+    liked:    { lo:1500, hi:2000 },
+    fine:     { lo:900,  hi:1500 },
+    disliked: { lo:0,    hi:900  },
+  };
+
+  function goTo(screen) {
+    hideOverlay();
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + screen).classList.add('active');
+  }
+
+  function hideOverlay() {
+    const o = document.getElementById('duel-overlay');
+    o.classList.remove('active');
+    o.style.cssText = '';
+    o.innerHTML = '';
+  }
+
+  function startDuel(filmTitle, year) {
+    currentFilm = filmTitle;
+    currentFilmYear = year;
+    const emojiMap = {'Dune: Part Two':'🏜️','Poor Things':'🎭','Oppenheimer':'💥','Past Lives':'💙','Killers of the Flower Moon':'🌙'};
+    currentFilmEmoji = emojiMap[filmTitle] || '🎬';
+    currentRating = 'liked';
+
+    const overlay = document.getElementById('duel-overlay');
+    overlay.style.cssText = '';
+    overlay.innerHTML = `
+      <div class="status-bar"><span class="time">9:41</span></div>
+      <div style="padding:14px 20px 0;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--white);font-weight:700">${filmTitle}</div>
+        <div style="font-size:13px;color:var(--gold);cursor:pointer" onclick="goTo('add')">Cancel</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 20px 0;gap:20px;overflow-y:auto">
+        <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);font-weight:700">How was it?</div>
+        <div style="display:flex;gap:20px;justify-content:center">
+          <div onclick="selectRating('liked')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
+            <div id="rating-liked" style="width:68px;height:68px;border-radius:50%;background:#1A3A1A;border:2px solid #2A5A2A;display:flex;align-items:center;justify-content:center;font-size:26px;transition:all 0.2s;color:#4A9A4A">✓</div>
+            <span style="font-size:12px;color:var(--gray-l)">I liked it!</span>
+          </div>
+          <div onclick="selectRating('fine')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
+            <div id="rating-fine" style="width:68px;height:68px;border-radius:50%;background:#2A2A10;border:2px solid #4A4A20;display:flex;align-items:center;justify-content:center;font-size:26px;transition:all 0.2s;color:#8A8A40">～</div>
+            <span style="font-size:12px;color:var(--gray-l)">It was fine</span>
+          </div>
+          <div onclick="selectRating('disliked')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
+            <div id="rating-disliked" style="width:68px;height:68px;border-radius:50%;background:#2A1010;border:2px solid #5A2020;display:flex;align-items:center;justify-content:center;font-size:26px;transition:all 0.2s;color:#9A4040">✗</div>
+            <span style="font-size:12px;color:var(--gray-l)">Didn't like it</span>
+          </div>
+        </div>
+        <div style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+          <div style="padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px"><span>👥</span><span style="font-size:13px;color:var(--gray-l)">Who did you watch with?</span></div>
+            <span style="color:var(--gray)">›</span>
+          </div>
+          <div style="padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px"><span>🏷</span><span style="font-size:13px;color:var(--gray-l)">Add labels</span></div>
+            <span style="color:var(--gray)">›</span>
+          </div>
+          <div style="padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px"><span>📝</span><span style="font-size:13px;color:var(--gray-l)">Add notes</span></div>
+            <span style="color:var(--gray)">›</span>
+          </div>
+          <div style="padding:11px 14px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:10px"><span>🔒</span>
+              <div><div style="font-size:13px;color:var(--gray-l)">Stealth mode</div><div style="font-size:11px;color:var(--gray)">Hide from feed</div></div>
+            </div>
+            <div style="width:38px;height:22px;background:var(--bg3);border-radius:11px;border:1px solid var(--border);cursor:pointer"></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 20px 28px">
+        <button class="btn btn-gold" id="rating-ok-btn" style="width:100%;opacity:0.4;pointer-events:none" onclick="proceedToDuels()">Start Duels →</button>
+      </div>`;
+    overlay.classList.add('active');
+  }
+
+  function selectRating(rating) {
+    currentRating = rating;
+    const cfg = {
+      liked:    { bg:'#2A5A2A', border:'#4A9A4A', color:'#4ACA4A' },
+      fine:     { bg:'#4A4A18', border:'#8A8A30', color:'#CACA50' },
+      disliked: { bg:'#5A1818', border:'#9A3030', color:'#CA5050' },
+    };
+    const off = {
+      liked:    { bg:'#1A3A1A', border:'#2A5A2A', color:'#4A9A4A' },
+      fine:     { bg:'#2A2A10', border:'#4A4A20', color:'#8A8A40' },
+      disliked: { bg:'#2A1010', border:'#5A2020', color:'#9A4040' },
+    };
+    ['liked','fine','disliked'].forEach(r => {
+      const el = document.getElementById('rating-' + r);
+      if (!el) return;
+      const s = r === rating ? cfg[r] : off[r];
+      el.style.background  = s.bg;
+      el.style.borderColor = s.border;
+      el.style.color       = s.color;
+      el.style.transform   = r === rating ? 'scale(1.1)' : 'scale(1)';
+      el.style.boxShadow   = r === rating ? '0 0 16px rgba(201,168,76,0.25)' : 'none';
+    });
+    const btn = document.getElementById('rating-ok-btn');
+    if (btn) { btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+  }
+
+  function proceedToDuels() {
+    const range = tierRanges[currentRating];
+    loElo = range.lo; hiElo = range.hi;
+    newFilmElo = Math.round((loElo + hiElo) / 2);
+    duelStep = 0;
+    showDuelScreen();
+  }
+
+  function showDuelScreen() {
+    const overlay = document.getElementById('duel-overlay');
+    overlay.style.cssText = '';
+    overlay.innerHTML = `
+      <div class="status-bar"><span class="time">9:41</span></div>
+      <div class="duel-header">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--white);font-weight:700">Duel Time ⚔️</div>
+          <div style="font-size:12px;color:var(--gray);margin-top:1px">Which do you prefer?</div>
+        </div>
+        <div style="font-size:13px;color:var(--gold)">${currentFilm}</div>
+      </div>
+      <div id="duel-progress" style="display:flex;align-items:center;gap:8px;padding:0 20px 8px"></div>
+      <div class="duel-vs-area">
+        <div style="font-size:12px;color:var(--gray-l);margin-bottom:4px">Tap to choose your winner</div>
+        <div class="duel-films" style="position:relative">
+          <div class="duel-film" id="duel-left" onclick="selectDuel('left')">
+            <div class="duel-film-poster" id="duel-left-poster"></div>
+            <div class="duel-film-title"  id="duel-left-title"></div>
+            <div class="duel-film-year"   id="duel-left-year"></div>
+            <div class="duel-film-score"  id="duel-left-score"></div>
+          </div>
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:32px;height:32px;background:var(--bg);border:1px solid var(--border-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gold);font-weight:700;z-index:2">VS</div>
+          <div class="duel-film" id="duel-right" onclick="selectDuel('right')">
+            <div class="duel-film-poster" id="duel-right-poster"></div>
+            <div class="duel-film-title"  id="duel-right-title"></div>
+            <div class="duel-film-year"   id="duel-right-year"></div>
+            <div class="duel-film-score"  id="duel-right-score"></div>
+          </div>
+        </div>
+      </div>
+      <div class="duel-skip" onclick="skipDuel()">Skip this comparison →</div>`;
+    overlay.classList.add('active');
+    updateProgress();
+    showCurrentDuel();
+  }
+
+  function nextOpponent() {
+    const pool = rankingPool
+      .filter(f => f.tier === currentRating && f.elo > loElo && f.elo < hiElo)
+      .sort((a,b) => a.elo - b.elo);
+    if (!pool.length) return null;
+    return pool[Math.floor(pool.length / 2)];
+  }
+
+  function eloConverged() {
+    const range = tierRanges[currentRating];
+    const totalRange = range.hi - range.lo;
+    const inRange = rankingPool.filter(f => f.tier === currentRating && f.elo > loElo && f.elo < hiElo);
+    return (hiElo - loElo < totalRange * 0.12) || inRange.length === 0;
+  }
+
+  function updateProgress() {
+    const p = document.getElementById('duel-progress');
+    if (!p) return;
+    const range = tierRanges[currentRating];
+    const totalRange = range.hi - range.lo;
+    const pct = Math.min(98, Math.round((1 - (hiElo - loElo) / totalRange) * 100));
+    p.innerHTML = `
+      <div style="flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--gold);border-radius:2px;transition:width 0.4s ease"></div>
+      </div>
+      <span style="font-size:10px;color:var(--gray);white-space:nowrap;margin-left:8px">${pct}% done</span>`;
+  }
+
+  function showCurrentDuel() {
+    const opp = nextOpponent();
+    if (!opp) { finishDuel(); return; }
+    document.getElementById('duel-left-poster').textContent  = currentFilmEmoji;
+    document.getElementById('duel-left-title').textContent   = currentFilm;
+    document.getElementById('duel-left-year').textContent    = currentFilmYear;
+    document.getElementById('duel-left-score').textContent   = 'New film';
+    document.getElementById('duel-right-poster').textContent = opp.emoji;
+    document.getElementById('duel-right-title').textContent  = opp.title;
+    document.getElementById('duel-right-year').textContent   = opp.year;
+    document.getElementById('duel-right-score').textContent  = 'Current: ' + eloToScore(opp.elo);
+    document.getElementById('duel-left').classList.remove('selected');
+    document.getElementById('duel-right').classList.remove('selected');
+    updateProgress();
+  }
+
+  function eloToScore(elo) { return (elo / 1950 * 10).toFixed(1); }
+
+  function selectDuel(side) {
+    document.getElementById('duel-' + side).classList.add('selected');
+    setTimeout(() => {
+      const opp = nextOpponent();
+      if (!opp) { finishDuel(); return; }
+      if (side === 'left') loElo = Math.max(loElo, opp.elo);
+      else                 hiElo = Math.min(hiElo, opp.elo);
+      newFilmElo = Math.round((loElo + hiElo) / 2);
+      duelStep++;
+      if (eloConverged() || duelStep >= 6) finishDuel();
+      else showCurrentDuel();
+    }, 420);
+  }
+
+  function skipDuel() {
+    duelStep++;
+    if (eloConverged() || duelStep >= 6) finishDuel();
+    else showCurrentDuel();
+  }
+
+  function finishDuel() {
+    const finalScore = eloToScore(newFilmElo);
+    const above = rankingPool.filter(f => f.elo > newFilmElo).length;
+    const rankPos = above + 1;
+    const overlay = document.getElementById('duel-overlay');
+    overlay.classList.add('active');
+    overlay.style.cssText = 'position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:100';
+    overlay.innerHTML = `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;overflow-y:auto">
+        <div style="font-size:52px">🏆</div>
+        <div style="font-family:'Playfair Display',serif;font-size:26px;color:var(--white);font-weight:700;text-align:center;line-height:1.2">${currentFilm}</div>
+        <div style="font-size:13px;color:var(--gray-l);text-align:center">has been ranked in your list</div>
+        <div style="background:var(--gold-glow);border:1px solid var(--border-strong);border-radius:20px;padding:20px 40px;text-align:center;width:100%">
+          <div style="font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Your score</div>
+          <div style="font-family:'Playfair Display',serif;font-size:52px;color:var(--gold);font-weight:700">${finalScore}</div>
+          <div style="font-size:12px;color:var(--gray-l);margin-top:4px">Ranked #${rankPos} in your list</div>
+        </div>
+        <div style="font-size:12px;color:var(--gray);text-align:center">Converged in ${duelStep} duel${duelStep!==1?'s':''}</div>
+        <button class="btn btn-gold"  style="width:100%;margin-top:4px" onclick="goTo('rankings')">See my rankings</button>
+        <button class="btn btn-ghost" style="width:100%"                onclick="goTo('add')">Add another film</button>
+      </div>`;
+  }
+</script>
+</body>
+</html>
